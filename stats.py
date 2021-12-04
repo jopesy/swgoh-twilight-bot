@@ -54,7 +54,7 @@ def get_guild_gl_table(allycode):
             "G13": 0,
             "ULTI": 0,
         },
-        "REY": {
+        "GLREY": {
             "TOTAL": 0,
             "G13": 0,
             "ULTI": 0,
