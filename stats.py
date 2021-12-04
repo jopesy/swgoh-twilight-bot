@@ -181,7 +181,7 @@ def get_guild_gl_table(allycode):
             ["SLKR", str(GL_NAME_COUNT_MAP["SLKR"]["TOTAL"]), str(GL_NAME_COUNT_MAP["SLKR"]["G13"]), "-"],
             ["JMK", str(GL_NAME_COUNT_MAP["JMK"]["TOTAL"]), str(GL_NAME_COUNT_MAP["JMK"]["G13"]), "-"],
             ["JML", str(GL_NAME_COUNT_MAP["JML"]["TOTAL"]), str(GL_NAME_COUNT_MAP["JML"]["G13"]), "-"],
-            ["REY", str(GL_NAME_COUNT_MAP["REY"]["TOTAL"]), str(GL_NAME_COUNT_MAP["REY"]["G13"]), "-"],
+            ["REY", str(GL_NAME_COUNT_MAP["REY"]["TOTAL"]), str(GL_NAME_COUNT_MAP["GLREY"]["G13"]), "-"],
             ["LV", str(GL_NAME_COUNT_MAP["LV"]["TOTAL"]), str(GL_NAME_COUNT_MAP["LV"]["G13"]), "-"],
             ["SEE", str(GL_NAME_COUNT_MAP["SEE"]["TOTAL"]), str(GL_NAME_COUNT_MAP["SEE"]["G13"]), "-"],
         ],
