@@ -30,8 +30,9 @@ async def guild_gl_table(ctx, allycode=None):
 
 @bot.command(name="banaani", help="Voimabiisi (tm)")
 async def banaania_poskeen(ctx):
-    video_url = "https://www.youtube.com/watch?v=fdMRX3XyD6U"
-    await ctx.send(video_url)
+    # video_url = "https://www.youtube.com/watch?v=fdMRX3XyD6U"
+    # await ctx.send(video_url)
+    await ctx.send("test")
 
 @bot.command(name="vurski", help="Damn those geonosians!")
 async def banaania_poskeen(ctx):

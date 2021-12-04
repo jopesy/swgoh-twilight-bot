@@ -101,11 +101,13 @@ def get_guild_gl_table(allycode):
 
     if guild_data:
         guild_name = guild_data[0]["name"]
+        print("GUILD NAME", guild_name)
         roster = guild_data[0]["roster"]
         player_codes = [player["allyCode"] for player in roster]
-        print("get player data...")
         player_data = client.get_data("player", player_codes)
         for player in player_data:
+            if player.get("guildName") != guild_name:
+                continue
             roster = player["roster"]
 
             for toon in roster:
@@ -114,6 +116,8 @@ def get_guild_gl_table(allycode):
                 if toon["defId"] in GL_IDS:
                     COUNT_GL_TOTAL += 1
                 if toon["defId"] == "SUPREMELEADERKYLOREN":
+                    print(player["name"])
+                    print(player["guildName"])
                     GL_NAME_COUNT_MAP["SLKR"]["TOTAL"] += 1
                     if toon["gear"] == 13:
                         GL_NAME_COUNT_MAP["SLKR"]["G13"] += 1
