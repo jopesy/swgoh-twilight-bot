@@ -27,14 +27,34 @@ def get_gl_comparison(allycode1, allycode2):
 
     return response
 
+def get_guild_player_table(allycode):
+    creds = settings(SWGOH_HELP_API_USERNAME, SWGOH_HELP_API_PASSWORD, "something", "anything")
+    client = SWGOHhelp(creds)
+
+    guild_data = client.get_data("guild", allycode)
+
+    data = []
+
+    roster = guild_data[0]["roster"]
+    gp_total = 0
+    for player in sorted(roster, key=lambda x: x["gp"], reverse=True):
+        gp_total += player["gp"]
+        data.append([player["name"], player["gp"]])
+
+    gp_median = roster[len(roster)//2]["gp"]
+
+    return data, gp_median
+
 
 def get_guild_gl_table(allycode):
-    print("COMPARE GUILDS")
+    print("GET GUILD GL TABLE")
     creds = settings(SWGOH_HELP_API_USERNAME, SWGOH_HELP_API_PASSWORD, "something", "anything")
     client = SWGOHhelp(creds)
 
     print("get guild data...")
     guild_data = client.get_data("guild", allycode)
+
+    print("GUILD DATA", guild_data)
 
     # GALACTIC LEGENDS
     COUNT_GL_TOTAL = 0
@@ -103,8 +123,16 @@ def get_guild_gl_table(allycode):
         guild_name = guild_data[0]["name"]
         print("GUILD NAME", guild_name)
         roster = guild_data[0]["roster"]
+        print("ROSTER", roster)
         player_codes = [player["allyCode"] for player in roster]
         player_data = client.get_data("player", player_codes)
+        print("*************")
+        print("*************")
+        print("*************")
+        print("*************")
+        print("*************")
+        print("*************")
+        print("PLAYER DATA", player_data[0])
         for player in player_data:
             if player.get("guildName") != guild_name:
                 continue
@@ -116,8 +144,6 @@ def get_guild_gl_table(allycode):
                 if toon["defId"] in GL_IDS:
                     COUNT_GL_TOTAL += 1
                 if toon["defId"] == "SUPREMELEADERKYLOREN":
-                    print(player["name"])
-                    print(player["guildName"])
                     GL_NAME_COUNT_MAP["SLKR"]["TOTAL"] += 1
                     if toon["gear"] == 13:
                         GL_NAME_COUNT_MAP["SLKR"]["G13"] += 1
@@ -180,18 +206,42 @@ def get_guild_gl_table(allycode):
 
     count_g13_total = sum([GL_NAME_COUNT_MAP[x]["G13"] for x in GL_NAME_COUNT_MAP])
     gl_table = t2a(
-        header=["GL", "COUNT", "G13", "ULTI"],
+        header=["GL", "COUNT", "G13"],
         body=[
-            ["SLKR", str(GL_NAME_COUNT_MAP["SLKR"]["TOTAL"]), str(GL_NAME_COUNT_MAP["SLKR"]["G13"]), "-"],
-            ["JMK", str(GL_NAME_COUNT_MAP["JMK"]["TOTAL"]), str(GL_NAME_COUNT_MAP["JMK"]["G13"]), "-"],
-            ["JML", str(GL_NAME_COUNT_MAP["JML"]["TOTAL"]), str(GL_NAME_COUNT_MAP["JML"]["G13"]), "-"],
-            ["REY", str(GL_NAME_COUNT_MAP["GLREY"]["TOTAL"]), str(GL_NAME_COUNT_MAP["GLREY"]["G13"]), "-"],
-            ["LV", str(GL_NAME_COUNT_MAP["LV"]["TOTAL"]), str(GL_NAME_COUNT_MAP["LV"]["G13"]), "-"],
-            ["SEE", str(GL_NAME_COUNT_MAP["SEE"]["TOTAL"]), str(GL_NAME_COUNT_MAP["SEE"]["G13"]), "-"],
+            [
+                "SLKR",
+                str(GL_NAME_COUNT_MAP["SLKR"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["SLKR"]["G13"]),
+            ],
+            [
+                "JMK",
+                str(GL_NAME_COUNT_MAP["JMK"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["JMK"]["G13"]),
+            ],
+            [
+                "JML",
+                str(GL_NAME_COUNT_MAP["JML"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["JML"]["G13"]),
+            ],
+            [
+                "REY",
+                str(GL_NAME_COUNT_MAP["GLREY"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["GLREY"]["G13"]),
+            ],
+            [
+                "LV", 
+                str(GL_NAME_COUNT_MAP["LV"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["LV"]["G13"]),
+            ],
+            [
+                "SEE",
+                str(GL_NAME_COUNT_MAP["SEE"]["TOTAL"]),
+                str(GL_NAME_COUNT_MAP["SEE"]["G13"]),
+            ],
         ],
-        footer=["TOTAL", str(COUNT_GL_TOTAL), str(count_g13_total), "-"],
+        footer=["TOTAL", str(COUNT_GL_TOTAL), str(count_g13_total)],
         first_col_heading=True,
-        alignments=[Alignment.LEFT] + [Alignment.RIGHT] * 3, # First is left, remaining 5 are right
+        alignments=[Alignment.LEFT] + [Alignment.RIGHT] * 2, # First is left, the other 2 are right
         # column_widths=[8] * 6,  # [5, 5, 5, 5, 5, 5]
     )
 
