@@ -53,8 +53,9 @@ async def send_vurski_gif(ctx):
 #         writer.writerows(player_data)
 #     await ctx.channel.send(file=File(file_path))
 
-@bot.command(name="excel", help="Killan GP-listaus XLSX-muodossa")
+@bot.command(name="excel", help="Killan TW-puolustus XLSX-muodossa")
 async def guild_gp_table_as_xlsx(ctx, slots_per_sector=None):
+    await ctx.send("Calculating...\n> _\"Beep boop.\"_  –R2D2")
     allycode = ALLYCODE
     if slots_per_sector:
         slots_per_sector = int(slots_per_sector) if slots_per_sector.isdigit() else None
