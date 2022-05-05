@@ -54,44 +54,45 @@ async def send_vurski_gif(ctx):
 #     await ctx.channel.send(file=File(file_path))
 
 @bot.command(name="excel", help="Killan GP-listaus XLSX-muodossa")
-async def guild_gp_table_as_xlsx(ctx, total_slots=None):
+async def guild_gp_table_as_xlsx(ctx, slots_per_sector=None):
     allycode = ALLYCODE
-    if total_slots:
-        total_slots = int(total_slots) if total_slots.isdigit() else None
-    file_path = "xlsx/guild_gp_table.xlsx"
+    if slots_per_sector:
+        slots_per_sector = int(slots_per_sector) if slots_per_sector.isdigit() else None
+    file_path = "xlsx/tw_defence.xlsx"
     player_data, gp_median = get_guild_player_table(allycode)
-    num_teams_median = None
-
-    print("GP median:", gp_median)
 
     # Create a workbook and add a worksheet.
     workbook = xlsxwriter.Workbook(file_path)
     worksheet = workbook.add_worksheet()
 
-    # Write the header row
-    worksheet.write(0, 0, "Name")
-    worksheet.write(0, 1, "GP")
-    if total_slots:
-        worksheet.write(0, 2, "TW defence")
+    # Write the slot info
+    worksheet.write(0, 0, "Slots per sector:")
+    worksheet.write(0, 1, slots_per_sector or 0)
+    worksheet.write(1, 0, "Total slots:")
+    worksheet.write_formula(1, 1, "IF(B1,B1*8,0)")
 
-    row = 1
+    # Write the table header row
+    worksheet.write(3, 0, "Name")
+    worksheet.write(3, 1, "GP")
+    worksheet.write(3, 2, "Teams")
+
+    row = 4
     col = 0
-
-    if total_slots:
-        num_players = len(player_data)
-        num_teams_median = total_slots/num_players
-
-        print("TEAMS per median:", num_teams_median)
 
     # Iterate over the data and write it out row by row.
     for name, gp in (player_data):
         gp_rounded = round(gp / 1000000, 2)
         worksheet.write(row, col,     name)
-        worksheet.write(row, col + 1, gp_rounded)
-        if total_slots and num_teams_median:
-            if gp == gp_median:
-                worksheet.write(row, col + 2, num_teams_median)
+        worksheet.write(row, col+1, gp_rounded)
+        formula = f"IF($B{row+1},ROUND(($B{row+1}+2)/(SUM($B$5:$B$54)+2*COUNT($B$5:$B$54))*8*$B$1,0),0)"
+        worksheet.write_formula(row, col+2, formula)
         row += 1
+    
+    row = 54
+
+    # Write totals
+    worksheet.write_formula(row, 1, f"=SUM($B5:$B{row})")
+    worksheet.write_formula(row, 2, f"=SUM($C5:$C{row})")
 
     workbook.close()
     await ctx.channel.send(file=File(file_path))
