@@ -22,14 +22,6 @@ async def guild_gl_table(ctx, allycode=None):
     response = get_guild_gl_table(allycode)
     await ctx.send(response)
 
-# @bot.command(name="tw", help="Responses with roster comparison between us and them")
-# async def guild_comparison(ctx, guild_name=None):
-#     await ctx.send("Fetching data from a galaxy far, far away...\n> _Patience you must have, my young padawan._  –Yoda")
-#     allycode1 = ALLYCODE
-#     allycode2 = ALLYCODE  # TODO
-#     response = get_gl_comparison(allycode1, allycode2)
-#     await ctx.send(response)
-
 @bot.command(name="banaani", help="Voimabiisi (tm)")
 async def banaania_poskeen(ctx):
     video_url = "https://www.youtube.com/watch?v=fdMRX3XyD6U"
@@ -39,22 +31,8 @@ async def banaania_poskeen(ctx):
 async def send_vurski_gif(ctx):
     await ctx.send(file=File("img/vurski.gif"))
 
-# @bot.command(name="csv", help="Killan GP-listaus CSV-muodossa")
-# async def guild_gp_table_as_csv(ctx):
-#     allycode = ALLYCODE
-#     file_path = "csv/guild_gp_table.csv"
-#     player_data, gp_median = get_guild_player_table(allycode)
-#     for player in player_data:
-#         print("player_data:", player)
-#     with open(file_path, "w") as f:
-#         writer = csv.writer(f)
-#         header = ["name", "GP"]
-#         writer.writerow(header)
-#         writer.writerows(player_data)
-#     await ctx.channel.send(file=File(file_path))
-
 @bot.command(name="excel", help="Killan TW-puolustus XLSX-muodossa")
-async def guild_gp_table_as_xlsx(ctx, slots_per_sector=None):
+async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
     await ctx.send("Calculating...\n> _\"Beep boop.\"_  –R2D2")
     allycode = ALLYCODE
     if slots_per_sector:
@@ -63,7 +41,7 @@ async def guild_gp_table_as_xlsx(ctx, slots_per_sector=None):
     player_data, gp_median = get_guild_player_table(allycode)
 
     # Create a workbook and add a worksheet.
-    workbook = xlsxwriter.Workbook(file_path)
+    workbook = xlsxwriter.Workbook(file_path, {'use_future_functions': True})
     worksheet = workbook.add_worksheet()
 
     # Write the slot info
@@ -78,22 +56,38 @@ async def guild_gp_table_as_xlsx(ctx, slots_per_sector=None):
     worksheet.write(3, 2, "Teams")
 
     row = 4
-    col = 0
 
     # Iterate over the data and write it out row by row.
     for name, gp in (player_data):
-        gp_rounded = round(gp / 1000000, 2)
+        # Player name
+        col = 0
         worksheet.write(row, col,     name)
-        worksheet.write(row, col+1, gp_rounded)
+
+        # Player GP
+        col = 1
+        gp_rounded = round(gp / 1000000, 2)
+        worksheet.write(row, col, gp_rounded)
+
+        # Number of teams to place
+        col = 2
         formula = f"IF($B{row+1},ROUND(($B{row+1}+2)/(SUM($B$5:$B$54)+2*COUNT($B$5:$B$54))*8*$B$1,0),0)"
-        worksheet.write_formula(row, col+2, formula)
+        worksheet.write_formula(row, col, formula)
+
+        # Player=X (used for generated string that can be copied to game chat)
+        col = 4
+        formula = f'=CONCAT(A${row+1}, "=", C${row+1})'
+        worksheet.write_formula(row, col, formula)
         row += 1
-    
-    row = 54
 
     # Write totals
+    row = 54
     worksheet.write_formula(row, 1, f"=SUM($B5:$B{row})")
     worksheet.write_formula(row, 2, f"=SUM($C5:$C{row})")
+
+    # String that can be copied to game chat
+    row = 56
+    formula = f'=TEXTJOIN(", ", TRUE, E5:E53)'
+    worksheet.write_formula(row, 1, formula)
 
     workbook.close()
     await ctx.channel.send(file=File(file_path))
