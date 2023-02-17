@@ -5,6 +5,8 @@ from swgoh_api.swgohhelp import settings, SWGOHhelp
 
 from table2ascii import table2ascii as t2a, Alignment
 
+from errors import APIError
+
 load_dotenv()
 
 SWGOH_HELP_API_USERNAME = os.getenv("SWGOH_HELP_API_USERNAME")
@@ -34,16 +36,19 @@ def get_guild_player_table(allycode):
     guild_data = client.get_data("guild", allycode)
 
     data = []
+    
+    if guild_data:
+        roster = guild_data[0]["roster"]
+        gp_total = 0
+        for player in sorted(roster, key=lambda x: x["gp"], reverse=True):
+            gp_total += player["gp"]
+            data.append([player["name"], player["gp"]])
 
-    roster = guild_data[0]["roster"]
-    gp_total = 0
-    for player in sorted(roster, key=lambda x: x["gp"], reverse=True):
-        gp_total += player["gp"]
-        data.append([player["name"], player["gp"]])
+        gp_median = roster[len(roster)//2]["gp"]
 
-    gp_median = roster[len(roster)//2]["gp"]
-
-    return data, gp_median
+        return data, gp_median
+    else:
+        raise APIError("Could not fetch guild data from API.")
 
 
 def get_guild_gl_table(allycode):

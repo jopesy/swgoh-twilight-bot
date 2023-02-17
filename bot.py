@@ -6,6 +6,7 @@ from discord import File
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from errors import APIError
 from stats import get_gl_comparison, get_guild_gl_table, get_guild_player_table
 
 load_dotenv()
@@ -15,7 +16,7 @@ ALLYCODE = os.getenv("ALLYCODE", 143133382)
 
 bot = commands.Bot(command_prefix="!", case_insensitive=True)
 
-@bot.command(name="gl", help="GL roster of given guild (allycode). Defaults to Northern Twilight.")
+@bot.command(name="gl", help="GL roster of given guild (allycode). Defaults to Northern Twilight. NOTE: Might not work correctly!")
 async def guild_gl_table(ctx, allycode=None):
     await ctx.send("Fetching data from a galaxy far, far away...\n> _\"Patience you must have, my young padawan.\"_  –Yoda")
     allycode = allycode if allycode else ALLYCODE
@@ -27,11 +28,11 @@ async def banaania_poskeen(ctx):
     video_url = "https://www.youtube.com/watch?v=fdMRX3XyD6U"
     await ctx.send(video_url)
 
-@bot.command(name="vurski", help="Damn those geonosians!")
+@bot.command(name="vurski", help="Damn geos!")
 async def send_vurski_gif(ctx):
     await ctx.send(file=File("img/vurski.gif"))
 
-@bot.command(name="excel", help="Killan TW-puolustus XLSX-muodossa")
+@bot.command(name="excel", help="TW-puolustuskiintiöt XLSX-muodossa")
 async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
     await ctx.send("Calculating...\n> _\"Beep boop.\"_  –R2D2")
     allycode = ALLYCODE
@@ -91,5 +92,14 @@ async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
 
     workbook.close()
     await ctx.channel.send(file=File(file_path))
+
+@bot.event
+async def on_command_error(ctx, error):
+    print("on_command_error:", error)
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Invalid command. Try using** `!help` **to figure out the commands!")
+    if isinstance(error, APIError):
+        print("APIError:", error)
+        await ctx.send("SWGOH API is not responding. Try again later.")
 
 bot.run(TOKEN)
