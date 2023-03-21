@@ -2,12 +2,13 @@ import os
 import csv
 import xlsxwriter
 
-from discord import File
+from discord import File, Embed
 from discord.ext import commands
 from dotenv import load_dotenv
 
 from errors import APIError
 from stats import get_gl_comparison, get_guild_gl_table, get_guild_player_table
+from tw import get_tw_defence
 
 load_dotenv()
 
@@ -31,6 +32,22 @@ async def banaania_poskeen(ctx):
 @bot.command(name="vurski", help="Damn geos!")
 async def send_vurski_gif(ctx):
     await ctx.send(file=File("img/vurski.gif"))
+
+@bot.command(name="tw", help="TW-puolustuskiintiöt (v2.0)")
+async def get_tw_quotas(ctx, slots_per_sector):
+    await ctx.send("Calculating...\n> _\"Beep boop.\"_  –R2D2")
+    total_slots = int(slots_per_sector) * 8
+    allycode = ALLYCODE
+    quotas = get_tw_defence(allycode, total_slots)
+    text = ""
+    chat_text = ""
+    for i, line in enumerate(quotas):
+        text += f"\n {line['name']}: {line['slots']}"
+        chat_text += f"{line['name']}={line['slots']}"
+        if i < len(quotas) -1:
+            chat_text += ", "
+    embed=Embed(title="TW-puolustus", description=text+"\n\n"+chat_text, color=0x31FC00)
+    await ctx.send(embed=embed)
 
 @bot.command(name="excel", help="TW-puolustuskiintiöt XLSX-muodossa")
 async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
