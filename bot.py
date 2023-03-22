@@ -77,7 +77,7 @@ async def get_tw_quotas(ctx, slots_per_sector):
         return res.user == ctx.author and res.message.id == message.id and res.data["component_type"] == 2
 
     try:
-        interaction = await bot.wait_for('interaction', check=check, timeout=60.0)
+        interaction = await bot.wait_for('interaction', check=check, timeout=120.0)
         selection = select.values + select_2.values
         # Update the form message after submit
         text = ", ".join(selection) if len(selection) else "Kaikki osallistuu! "
