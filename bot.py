@@ -1,21 +1,26 @@
 import os
 import csv
 import xlsxwriter
+import asyncio
 
-from discord import File, Embed
+import discord
+from discord import File, Embed, Intents
 from discord.ext import commands
+from discord.ui import Button, Select, View
 from dotenv import load_dotenv
 
 from errors import APIError
 from stats import get_gl_comparison, get_guild_gl_table, get_guild_player_table
-from tw import get_tw_defence
+from tw import get_guild_members, get_tw_defence
+
+from ui import GuildMemberSelect
 
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 ALLYCODE = os.getenv("ALLYCODE", 143133382)
 
-bot = commands.Bot(command_prefix="!", case_insensitive=True)
+bot = commands.Bot(command_prefix="!", case_insensitive=True, intents=Intents.all())
 
 @bot.command(name="gl", help="GL roster of given guild (allycode). Defaults to Northern Twilight. NOTE: Might not work correctly!")
 async def guild_gl_table(ctx, allycode=None):
@@ -24,30 +29,87 @@ async def guild_gl_table(ctx, allycode=None):
     response = get_guild_gl_table(allycode)
     await ctx.send(response)
 
+
 @bot.command(name="banaani", help="Voimabiisi (tm)")
 async def banaania_poskeen(ctx):
     video_url = "https://www.youtube.com/watch?v=fdMRX3XyD6U"
     await ctx.send(video_url)
 
+
 @bot.command(name="vurski", help="Damn geos!")
 async def send_vurski_gif(ctx):
     await ctx.send(file=File("img/vurski.gif"))
 
+
 @bot.command(name="tw", help="TW-puolustuskiintiöt (v2.0)")
 async def get_tw_quotas(ctx, slots_per_sector):
-    await ctx.send("Calculating...\n> _\"Beep boop.\"_  –R2D2")
-    total_slots = int(slots_per_sector) * 8
-    allycode = ALLYCODE
-    quotas = get_tw_defence(allycode, total_slots)
-    text = ""
-    chat_text = ""
-    for i, line in enumerate(quotas):
-        text += f"\n {line['name']}: {line['slots']}"
-        chat_text += f"{line['name']}={line['slots']}"
-        if i < len(quotas) -1:
-            chat_text += ", "
-    embed=Embed(title="TW-puolustus", description=text+"\n\n"+chat_text, color=0x31FC00)
-    await ctx.send(embed=embed)
+    await ctx.send("Haetaan killan tietoja... :rocket:")
+
+    guild_members = get_guild_members(ALLYCODE)
+
+    # Create a list of `SelectOption` objects representing the fruit options
+    options = [discord.SelectOption(label=member["name"]) for member in guild_members]
+
+    # Create the `Select` components with the guild member options.
+    # We need multiple because the Discord API doesn't allow more than 25 options.
+    select1_options = options[:25]
+    select = GuildMemberSelect(options=select1_options, min_values=0, max_values=25)
+
+    if len(options) > 25:
+        select2_options = options[25:]
+        select_2 = GuildMemberSelect(options=options[25:], min_values=0, max_values=len(select2_options))
+
+    # Create a `Button` component to submit the selection
+    submit_button = Button(label="Submit")
+
+    # Create a view
+    view = View()
+    view.add_item(select)
+    if select_2:
+        view.add_item(select_2)
+    view.add_item(submit_button)
+
+    # Send a message with the `Select` and `Button` components
+    message = await ctx.send("Kuka EI osallistu?", view=view)
+
+    def check(res):
+        # Check if the user who invoked the command interacted with the `Button` component
+        return res.user == ctx.author and res.message.id == message.id and res.data["component_type"] == 2
+
+    try:
+        interaction = await bot.wait_for('interaction', check=check, timeout=60.0)
+        selection = select.values + select_2.values
+        # Update the form message after submit
+        text = ", ".join(selection) if len(selection) else "Kaikki osallistuu! "
+        emoji = ":pleading_face:" if len(selection) else ":partying_face:"
+        embed=Embed(description=f"{text} \n\n {emoji}", color=0x060b9)
+        await message.edit(view=None, embed=embed)
+        # await interaction.response.send_message("Lasketaan kovaa...\n> _\"Beep boop.\"_  –R2D2")
+        await interaction.response.defer()
+
+        # Get the TW defence quotas
+        total_slots = int(slots_per_sector) * 8
+        quotas = get_tw_defence(
+            number_of_slots=total_slots,
+            guild_members=guild_members,
+            exclude_list=selection
+        )
+
+        # Send the response
+        text = ""
+        chat_text = ""
+        for i, line in enumerate(quotas):
+            text += f"\n {line['name']}: {line['slots']}"
+            chat_text += f"{line['name']}={line['slots']}"
+            if i < len(quotas) -1:
+                chat_text += ", "
+        embed=Embed(title="TW-puolustus", description=text+"\n\n"+chat_text, color=0x31FC00)
+        await ctx.send(embed=embed)
+
+    except asyncio.TimeoutError:
+        await ctx.send("Time's up! Try again!")
+        return
+
 
 @bot.command(name="excel", help="TW-puolustuskiintiöt XLSX-muodossa")
 async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
@@ -109,6 +171,7 @@ async def tw_defence_allocation_as_xlsx(ctx, slots_per_sector=None):
 
     workbook.close()
     await ctx.channel.send(file=File(file_path))
+
 
 @bot.event
 async def on_command_error(ctx, error):
