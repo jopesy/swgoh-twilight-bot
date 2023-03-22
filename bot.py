@@ -46,9 +46,10 @@ async def get_tw_quotas(ctx, slots_per_sector):
     await ctx.send("Haetaan killan tietoja... :rocket:")
 
     guild_members = get_guild_members(ALLYCODE)
+    guild_members_sorted = sorted(guild_members, key=lambda x: x["name"].lower())
 
     # Create a list of `SelectOption` objects representing the fruit options
-    options = [discord.SelectOption(label=member["name"]) for member in guild_members]
+    options = [discord.SelectOption(label=member["name"]) for member in guild_members_sorted]
 
     # Create the `Select` components with the guild member options.
     # We need multiple because the Discord API doesn't allow more than 25 options.
