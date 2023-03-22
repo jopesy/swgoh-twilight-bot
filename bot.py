@@ -8,6 +8,7 @@ from discord import File, Embed, Intents
 from discord.ext import commands
 from discord.ui import Button, Select, View
 from dotenv import load_dotenv
+from textwrap import wrap
 
 from errors import APIError
 from stats import get_gl_comparison, get_guild_gl_table, get_guild_player_table
@@ -80,12 +81,12 @@ async def get_tw_quotas(ctx, slots_per_sector):
     try:
         interaction = await bot.wait_for('interaction', check=check, timeout=120.0)
         selection = select.values + select_2.values
+
         # Update the form message after submit
         text = ", ".join(selection) if len(selection) else "Kaikki osallistuu! "
         emoji = ":pleading_face:" if len(selection) else ":partying_face:"
         embed=Embed(description=f"{text} \n\n {emoji}", color=0x060b9)
         await message.edit(view=None, embed=embed)
-        # await interaction.response.send_message("Lasketaan kovaa...\n> _\"Beep boop.\"_  –R2D2")
         await interaction.response.defer()
 
         # Get the TW defence quotas
@@ -99,13 +100,30 @@ async def get_tw_quotas(ctx, slots_per_sector):
         # Send the response
         text = ""
         chat_text = ""
+        chat_text_parts = []
+        chat_text_part = ""
+
         for i, line in enumerate(quotas):
             text += f"\n {line['name']}: {line['slots']}"
-            chat_text += f"{line['name']}={line['slots']}"
-            if i < len(quotas) -1:
-                chat_text += ", "
-        embed=Embed(title="TW-puolustus", description=text+"\n\n"+chat_text, color=0x31FC00)
+
+            if len(chat_text_part) > 100:
+                chat_text_parts.append(chat_text_part[:-2])
+                chat_text_part = ""
+
+            chat_text_part += f"{line['name']}={line['slots']}"
+
+            if i < len(quotas) - 1:
+                chat_text_part += ", "
+
+            if i == len(quotas) - 1:
+                chat_text_parts.append(chat_text_part) 
+
+        chat_text = "\n\n".join(chat_text_parts)
+
+        embed=Embed(title="TW-puolustus", description=text, color=0x31FC00)
+        chat_embed=Embed(title="Peli-chat", description=chat_text, color=0x31FC00)
         await ctx.send(embed=embed)
+        await ctx.send(embed=chat_embed)
 
     except asyncio.TimeoutError:
         await ctx.send("Time's up! Try again!")
