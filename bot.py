@@ -12,8 +12,9 @@ from textwrap import wrap
 
 from errors import APIError
 from stats import get_gl_comparison, get_guild_gl_table, get_guild_player_table
-from tw import get_guild_members, get_tw_defence
-
+from swgoh_help import get_guild_members_from_swgoh_help
+from swgoh_gg import get_guild_members_from_swgoh_gg
+from tw import get_tw_defence
 from ui import GuildMemberSelect
 
 load_dotenv()
@@ -46,10 +47,16 @@ async def send_vurski_gif(ctx):
 async def get_tw_quotas(ctx, slots_per_sector):
     await ctx.send("Haetaan killan tietoja... :rocket:")
 
-    guild_members = get_guild_members(ALLYCODE)
+    # Get guild roster from SWGOH.HELP API
+    # guild_members = get_guild_members_from_swgoh_help(ALLYCODE)
+
+    # Get guild roster from SWGOH.GG API
+    guild_members = get_guild_members_from_swgoh_gg()
+
+    # Sort the member list by name
     guild_members_sorted = sorted(guild_members, key=lambda x: x["name"].lower())
 
-    # Create a list of `SelectOption` objects representing the fruit options
+    # Create a list of `SelectOption` objects representing the member options
     options = [discord.SelectOption(label=member["name"]) for member in guild_members_sorted]
 
     # Create the `Select` components with the guild member options.
@@ -67,7 +74,7 @@ async def get_tw_quotas(ctx, slots_per_sector):
     # Create a view
     view = View()
     view.add_item(select)
-    if select_2:
+    if len(options) > 25:
         view.add_item(select_2)
     view.add_item(submit_button)
 
@@ -80,7 +87,9 @@ async def get_tw_quotas(ctx, slots_per_sector):
 
     try:
         interaction = await bot.wait_for('interaction', check=check, timeout=120.0)
-        selection = select.values + select_2.values
+        selection = select.values
+        if len(options) > 25:
+            selection += select_2.values
 
         # Update the form message after submit
         text = ", ".join(selection) if len(selection) else "Kaikki osallistuu! "
