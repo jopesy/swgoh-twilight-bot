@@ -129,10 +129,17 @@ async def get_tw_quotas(ctx, slots_per_sector):
 
         chat_text = "\n\n".join(chat_text_parts)
 
+        embed_list = []
         embed=Embed(title="TW-puolustus", description=text, color=0x31FC00)
-        chat_embed=Embed(title="Peli-chat", description=chat_text, color=0x31FC00)
-        await ctx.send(embed=embed)
-        await ctx.send(embed=chat_embed)
+        embed_list.append(embed)
+
+        # chat_embed=Embed(title="Peli-chat", description=chat_text, color=0x31FC00)
+        # await ctx.send(embed=chat_embed)
+
+        for part in chat_text_parts:
+            chat_embed=Embed(description=part, color=0x49b5fc)
+            embed_list.append(chat_embed)
+        await ctx.send(embeds=embed_list)
 
     except asyncio.TimeoutError:
         await ctx.send("Time's up! Try again!")
