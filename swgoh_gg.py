@@ -8,7 +8,7 @@ def get_guild_members_from_swgoh_gg(guild_id=None):
     guild_members = []
 
     # Set the API endpoint
-    url = f"http://api.swgoh.gg/guild-profile/{guild_id}"
+    url = f"http://swgoh.gg/api/guild-profile/{guild_id}"
 
     # Send a GET request to get guild data from the API endpoint
     response = requests.get(url)
