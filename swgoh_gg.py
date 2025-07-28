@@ -1,17 +1,28 @@
+import os
 import requests
+
+from dotenv import load_dotenv
 
 from errors import APIError
 
 def get_guild_members_from_swgoh_gg(guild_id=None):
+
+    # Load environment variables from .env
+    load_dotenv()
+
     guild_id = guild_id or "SF0zGaLuQiCapg85lVPxxw"
+    api_key = os.getenv("SWGOH_GG_API_KEY")
 
     guild_members = []
 
     # Set the API endpoint
     url = f"http://swgoh.gg/api/guild-profile/{guild_id}"
+    headers = {
+        "x-gg-bot-access": api_key
+    }
 
     # Send a GET request to get guild data from the API endpoint
-    response = requests.get(url)
+    response = requests.get(url, headers=headers)
 
     # Check if the response is successful
     if response.status_code == 200:
